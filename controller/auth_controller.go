@@ -2,9 +2,12 @@ package controller
 
 import (
 	"homewood/database"
+	"homewood/function"
 	"homewood/model"
+	"time"
 
 	"log"
+	"math/rand"
 
 	"github.com/gofiber/fiber/v3"
 	"golang.org/x/crypto/bcrypt"
@@ -98,5 +101,50 @@ func LoginUser(c fiber.Ctx) error {
 
 	context["msg"] = "Login successful"
 	c.Status(200)
+	return c.JSON(context)
+}
+
+func SendToken(c fiber.Ctx) error {
+	context := fiber.Map{
+		"statusText": "Ok",
+		"msg":        "Token sent successfully",
+	}
+
+	credentials := new(model.User)
+	if err := c.Bind().Body(credentials); err != nil {
+		log.Printf("Error parsing request body: %v", err)
+		context["statusText"] = "bad"
+		context["msg"] = "invalid request"
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(context)
+	}
+
+	var user model.User
+	result := database.DbConn.Where("email = ?", credentials.Email).First(&user)
+	if result.Error != nil {
+		context["statusText"] = "bad"
+		context["msg"] = "email not found"
+		c.Status(fiber.StatusNotFound)
+		return c.JSON(context)
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	token := rand.Intn(900000) + 100000
+
+	function.SendMail(user.Email, token)
+
+	record := model.PasswordReset{
+		Email:      user.Email,
+		ResetToken: token,
+	}
+	if err := database.DbConn.Create(&record).Error; err != nil {
+		log.Printf("Error saving reset token: %v", err)
+		context["statusText"] = "bad"
+		context["msg"] = "error in saving reset token"
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(context)
+	}
+
+	c.Status(fiber.StatusOK)
 	return c.JSON(context)
 }
