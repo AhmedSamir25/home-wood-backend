@@ -181,3 +181,51 @@ func ResetPassword(c fiber.Ctx) error {
 	c.Status(200)
 	return c.JSON(context)
 }
+
+func UpdatePassword(c fiber.Ctx) error {
+	context := fiber.Map{
+		"statusText": "Ok",
+		"msg":        "Update Password successful",
+	}
+
+	// استلام بيانات الطلب
+	var credentials model.User
+	if err := c.Bind().Body(&credentials); err != nil {
+		log.Printf("Error parsing request body: %v", err)
+		context["statusText"] = "bad"
+		context["msg"] = "invalid request"
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(context)
+	}
+
+	// البحث عن المستخدم بالبريد الإلكتروني
+	var user model.User
+	result := database.DbConn.Where("email = ?", credentials.Email).First(&user)
+	if result.Error != nil {
+		context["statusText"] = "bad"
+		context["msg"] = "email invalid"
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(context)
+	}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(credentials.Password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Println("Error hashing password:", err)
+		context["statusText"] = "bad"
+		context["msg"] = "error hashing password"
+		c.Status(500)
+		return c.JSON(context)
+	}
+	credentials.Password = string(hashedPassword)
+
+	user.Password = credentials.Password
+	updateResult := database.DbConn.Save(&user)
+	if updateResult.Error != nil {
+		log.Println("Error in saving password")
+		context["statusText"] = "bad"
+		context["msg"] = "error updating password"
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(context)
+	}
+	c.Status(200)
+	return c.JSON(context)
+}

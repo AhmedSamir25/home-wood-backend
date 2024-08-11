@@ -11,4 +11,5 @@ func AuthRouter(app *fiber.App) {
 	app.Get("/login", controller.LoginUser)
 	app.Post("/forgetpassword", controller.SendToken)
 	app.Get("/sendtoken", controller.ResetPassword)
+	app.Put("/resetpassword", controller.UpdatePassword)
 }
