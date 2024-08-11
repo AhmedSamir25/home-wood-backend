@@ -28,7 +28,7 @@ func CreateUser(c fiber.Ctx) error {
 		return c.JSON(context)
 	}
 
-	if record.Name == "" || record.Password == "" {
+	if record.Email == "" || record.Password == "" {
 		context["statusText"] = "bad"
 		context["msg"] = "Name and Password are required"
 		c.Status(400)
@@ -146,5 +146,38 @@ func SendToken(c fiber.Ctx) error {
 	}
 
 	c.Status(fiber.StatusOK)
+	return c.JSON(context)
+}
+
+func ResetPassword(c fiber.Ctx) error {
+	context := fiber.Map{
+		"statusText": "Ok",
+		"msg":        "Reset Password successful",
+	}
+	credentials := new(model.PasswordReset)
+	if err := c.Bind().Body(credentials); err != nil {
+		log.Printf("Error parsing request body: %v", err)
+		context["statusText"] = "bad"
+		context["msg"] = "invalid request"
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(context)
+	}
+	var passwordReset model.PasswordReset
+	result := database.DbConn.Where("email = ? AND reset_token = ?", credentials.Email, credentials.ResetToken).First(&passwordReset)
+	if result.Error != nil {
+		context["statusText"] = "bad"
+		context["msg"] = "email or token is invalid"
+		c.Status(400)
+		return c.JSON(context)
+	}
+	result = database.DbConn.Delete(&passwordReset)
+	if result.Error != nil {
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"msg":    "error",
+			"status": "error",
+		})
+	}
+	c.Status(200)
 	return c.JSON(context)
 }
