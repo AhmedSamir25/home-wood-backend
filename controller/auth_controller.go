@@ -188,7 +188,6 @@ func UpdatePassword(c fiber.Ctx) error {
 		"msg":        "Update Password successful",
 	}
 
-	// استلام بيانات الطلب
 	var credentials model.User
 	if err := c.Bind().Body(&credentials); err != nil {
 		log.Printf("Error parsing request body: %v", err)
@@ -198,7 +197,6 @@ func UpdatePassword(c fiber.Ctx) error {
 		return c.JSON(context)
 	}
 
-	// البحث عن المستخدم بالبريد الإلكتروني
 	var user model.User
 	result := database.DbConn.Where("email = ?", credentials.Email).First(&user)
 	if result.Error != nil {
@@ -227,5 +225,12 @@ func UpdatePassword(c fiber.Ctx) error {
 		return c.JSON(context)
 	}
 	c.Status(200)
+	return c.JSON(context)
+}
+func TestT(c fiber.Ctx) error {
+	context := fiber.Map{
+		"statusText": "Ok",
+		"msg":        "Update Password successful",
+	}
 	return c.JSON(context)
 }
