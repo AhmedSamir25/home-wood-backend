@@ -11,5 +11,5 @@ func main() {
 	database.ConnDB()
 	app := fiber.New()
 	router.AuthRouter(app)
-	app.Listen("0.0.0.0:3002")
+	app.Listen("192.168.1.5:3002")
 }
