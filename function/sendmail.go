@@ -13,7 +13,13 @@ func SendMail(toMail string, token int) {
 	smtpHost := os.Getenv("SMTP_HOST")
 	emailSender := os.Getenv("EMAIL_SENDER")
 	emailPassword := os.Getenv("EMAIL_PASSWORD")
-	tmpl := `Hello, your reset token is: <b>{{.Token}}</b>!`
+	tmpl := `Hello, your reset token is: <b>{{.Token}}</b>`
+
+	data := struct {
+		Token int
+	}{
+		Token: token,
+	}
 
 	t, err := template.New("email").Parse(tmpl)
 	if err != nil {
@@ -21,7 +27,7 @@ func SendMail(toMail string, token int) {
 	}
 
 	var body bytes.Buffer
-	if err := t.Execute(&body, token); err != nil {
+	if err := t.Execute(&body, data); err != nil {
 		fmt.Printf("error executing template: %v", err)
 	}
 	m := gomail.NewMessage()
