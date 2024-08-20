@@ -149,10 +149,10 @@ func SendToken(c fiber.Ctx) error {
 	return c.JSON(context)
 }
 
-func ResetPassword(c fiber.Ctx) error {
+func CheckToken(c fiber.Ctx) error {
 	context := fiber.Map{
 		"statusText": "Ok",
-		"msg":        "Reset Password successful",
+		"msg":        "check token successful",
 	}
 	credentials := new(model.PasswordReset)
 	if err := c.Bind().Body(credentials); err != nil {
@@ -170,63 +170,81 @@ func ResetPassword(c fiber.Ctx) error {
 		c.Status(400)
 		return c.JSON(context)
 	}
-	result = database.DbConn.Delete(&passwordReset)
-	if result.Error != nil {
-		c.Status(fiber.StatusInternalServerError)
-		return c.JSON(fiber.Map{
-			"msg":    "error",
-			"status": "error",
-		})
-	}
 	c.Status(200)
 	return c.JSON(context)
 }
-
-func UpdatePassword(c fiber.Ctx) error {
+func ResetAndUpdatePassword(c fiber.Ctx) error {
 	context := fiber.Map{
 		"statusText": "Ok",
-		"msg":        "Update Password successful",
+		"msg":        "Password reset and update successful",
 	}
 
-	var credentials model.User
-	if err := c.Bind().Body(&credentials); err != nil {
+	credentials := new(model.PasswordReset)
+	if err := c.Bind().Body(credentials); err != nil {
 		log.Printf("Error parsing request body: %v", err)
 		context["statusText"] = "bad"
-		context["msg"] = "invalid request"
+		context["msg"] = "Invalid request"
 		c.Status(fiber.StatusBadRequest)
+		return c.JSON(context)
+	}
+	record := new(model.User)
+	if err := c.Bind().Body(record); err != nil {
+		log.Printf("Error parsing request body: %v", err)
+		context["statusText"] = "bad"
+		context["msg"] = "Invalid request"
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(context)
+	}
+
+	var passwordReset model.PasswordReset
+	result := database.DbConn.Where("email = ? AND reset_token = ?", credentials.Email, credentials.ResetToken).First(&passwordReset)
+	if result.Error != nil {
+		context["statusText"] = "bad"
+		context["msg"] = "Invalid email or token"
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(context)
+	}
+
+	result = database.DbConn.Delete(&passwordReset)
+	if result.Error != nil {
+		context["statusText"] = "bad"
+		context["msg"] = "Error deleting reset token"
+		c.Status(fiber.StatusInternalServerError)
 		return c.JSON(context)
 	}
 
 	var user model.User
-	result := database.DbConn.Where("email = ?", credentials.Email).First(&user)
+	result = database.DbConn.Where("email = ?", record.Email).First(&user)
 	if result.Error != nil {
 		context["statusText"] = "bad"
-		context["msg"] = "email invalid"
+		context["msg"] = "Invalid email"
 		c.Status(fiber.StatusBadRequest)
 		return c.JSON(context)
 	}
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(credentials.Password), bcrypt.DefaultCost)
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(record.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Error hashing password:", err)
 		context["statusText"] = "bad"
-		context["msg"] = "error hashing password"
-		c.Status(500)
-		return c.JSON(context)
-	}
-	credentials.Password = string(hashedPassword)
-
-	user.Password = credentials.Password
-	updateResult := database.DbConn.Save(&user)
-	if updateResult.Error != nil {
-		log.Println("Error in saving password")
-		context["statusText"] = "bad"
-		context["msg"] = "error updating password"
+		context["msg"] = "Error hashing password"
 		c.Status(fiber.StatusInternalServerError)
 		return c.JSON(context)
 	}
-	c.Status(200)
+
+	user.Password = string(hashedPassword)
+	updateResult := database.DbConn.Save(&user)
+	if updateResult.Error != nil {
+		log.Println("Error saving new password")
+		context["statusText"] = "bad"
+		context["msg"] = "Error updating password"
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(context)
+	}
+
+	c.Status(fiber.StatusOK)
 	return c.JSON(context)
 }
+
 func TestT(c fiber.Ctx) error {
 	context := fiber.Map{
 		"statusText": "Ok",
