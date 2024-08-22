@@ -61,7 +61,7 @@ func CreateUser(c fiber.Ctx) error {
 		c.Status(fiber.StatusInternalServerError)
 		return c.JSON(context)
 	}
-
+	context["id"] = record.Id
 	c.Status(200)
 	return c.JSON(context)
 }
@@ -98,7 +98,7 @@ func LoginUser(c fiber.Ctx) error {
 		c.Status(400)
 		return c.JSON(context)
 	}
-
+	context["id"] = user.Id
 	context["msg"] = "Login successful"
 	c.Status(200)
 	return c.JSON(context)
