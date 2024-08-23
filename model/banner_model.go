@@ -1,6 +1,6 @@
 package model
 
 type Banner struct {
-	Id          uint   `json:"id"`
+	BannerId    uint   `json:"banner_id"`
 	BannerImage string `json:"banner_image"`
 }
