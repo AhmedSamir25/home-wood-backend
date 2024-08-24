@@ -8,4 +8,5 @@ import (
 
 func CategoriesRouter(app *fiber.App) {
 	app.Get("homewood/categories", controller.GetCategories)
+	app.Post("homewood/categories", controller.AddCategory)
 }
