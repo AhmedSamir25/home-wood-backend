@@ -12,5 +12,6 @@ func main() {
 	app := fiber.New()
 	router.AuthRouter(app)
 	router.BannerRouter(app)
+	router.CategoriesRouter(app)
 	app.Listen("0.0.0.0:3002")
 }
