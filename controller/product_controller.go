@@ -50,3 +50,36 @@ func AddProduct(c fiber.Ctx) error {
 	c.Status(200)
 	return c.JSON(context)
 }
+
+func UpdateProduct(c fiber.Ctx) error {
+	context := fiber.Map{
+		"msg":        "update product success",
+		"statusText": "Ok",
+	}
+	id := c.Params("id")
+	record := new(model.Products)
+	result := database.DbConn.First(record, "product_id = ?", id)
+	if result.Error != nil {
+		context["msg"] = "record not found"
+		context["statusText"] = "error"
+		c.Status(400)
+	}
+	if err := c.Bind().Body(record); err != nil {
+		context["msg"] = "error parsing request body"
+		context["statusText"] = "error"
+		c.Status(400)
+	}
+	result = database.DbConn.Model(record).Where("product_id = ?", id).Save(record)
+	if result.Error != nil {
+		context["msg"] = "error when product"
+		context["statusText"] = "error"
+		c.Status(400)
+	}
+	if result.RowsAffected == 0 {
+		context["msg"] = "no records were updated"
+		context["statusText"] = "warning"
+		return c.Status(fiber.StatusNotFound).JSON(context)
+	}
+	c.Status(200)
+	return c.JSON(context)
+}
