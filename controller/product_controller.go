@@ -83,3 +83,32 @@ func UpdateProduct(c fiber.Ctx) error {
 	c.Status(200)
 	return c.JSON(context)
 }
+
+func DeleteProduct(c fiber.Ctx) error {
+	context := fiber.Map{
+		"msg":        "delete product success",
+		"statusText": "Ok",
+	}
+	id := c.Params("id")
+	record := new(model.Products)
+	result := database.DbConn.First(&record, "product_id = ?", id)
+
+	if result.Error != nil {
+		context["msg"] = "record not found"
+		context["statusText"] = "error"
+		return c.Status(fiber.StatusNotFound).JSON(context)
+	}
+	result = database.DbConn.Where("product_id = ?", id).Delete(&model.Products{})
+	if result.Error != nil {
+		context["msg"] = "error deleting record"
+		context["statusText"] = "error"
+		return c.Status(fiber.StatusInternalServerError).JSON(context)
+	}
+	if result.RowsAffected == 0 {
+		context["msg"] = "no records were deleted"
+		context["statusText"] = "warning"
+		return c.Status(fiber.StatusNotFound).JSON(context)
+	}
+	c.Status(200)
+	return c.JSON(context)
+}
