@@ -26,3 +26,27 @@ func GetAllProducts(c fiber.Ctx) error {
 	c.Status(200)
 	return c.JSON(context)
 }
+
+func AddProduct(c fiber.Ctx) error {
+	context := fiber.Map{
+		"msg":        "success add product",
+		"statusText": "Ok",
+	}
+	record := new(model.Products)
+	if err := c.Bind().Body(record); err != nil {
+		context["statusText"] = "bad"
+		context["msg"] = "invalid request"
+		c.Status(400)
+		return c.JSON(context)
+	}
+	db := database.DbConn
+	result := db.Create(record)
+	if result.Error != nil {
+		context["msg"] = "error when add product"
+		context["statusText"] = "error"
+		c.Status(400)
+		c.JSON(context)
+	}
+	c.Status(200)
+	return c.JSON(context)
+}
