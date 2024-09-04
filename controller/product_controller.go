@@ -1,30 +1,86 @@
 package controller
 
 import (
+	"homewood/common"
 	"homewood/database"
+	"homewood/helpers"
 	"homewood/model"
+	"strconv"
 
 	"github.com/gofiber/fiber/v3"
 )
 
 func GetAllProducts(c fiber.Ctx) error {
 	context := fiber.Map{
-		"msg":        "get all product be success",
+		"msg":        "get all products success",
 		"statusText": "Ok",
 	}
 	db := database.DbConn
-	var record []model.Products
-	db.Find(&record)
-	if record == nil {
-		context["msg"] = "error when get products"
-		context["statusText"] = "error"
-		c.Status(400)
-		return c.JSON(context)
+
+	pageStr := c.Params("pageid", "1")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
 	}
 
-	context["products"] = record
-	c.Status(200)
-	return c.JSON(context)
+	perPage := c.Query("per_page", "10")
+	sortOrder := c.Query("sort_order", "desc")
+	record := []model.Products{}
+
+	limit, err := strconv.ParseInt(perPage, 10, 64)
+	if limit < 1 || limit > 100 {
+		limit = 5
+	}
+	if err != nil {
+		return c.Status(500).JSON("Invalid per_page option")
+	}
+
+	offset := (page - 1) * int(limit)
+
+	db.Order("product_id " + sortOrder).Offset(offset).Limit(int(limit)).Find(&record)
+
+	if len(record) == 0 {
+		context["msg"] = "No products found"
+		context["statusText"] = "error"
+		return c.Status(400).JSON(context)
+	}
+
+	pageInfo := calculatePagination(page == 1, len(record) == int(limit), int(limit), record, len(record) == int(limit))
+
+	response := common.ResponseDTO{
+		Success:    true,
+		Data:       record,
+		Pagination: pageInfo,
+	}
+	context["products"] = response
+	return c.Status(200).JSON(context)
+}
+
+func calculatePagination(isFirstPage bool, hasPagination bool, _ int, record []model.Products, pointsNext bool) helpers.PaginationInfo {
+	pagination := helpers.PaginationInfo{}
+	var nextCur, prevCur helpers.Cursor
+
+	if isFirstPage {
+		if hasPagination {
+			nextCur = helpers.CreateCursor(record[len(record)-1].ProductId, true)
+			pagination = helpers.GeneratePager(nextCur, nil)
+		}
+	} else {
+		if pointsNext {
+			if hasPagination {
+				nextCur = helpers.CreateCursor(record[len(record)-1].ProductId, true)
+			}
+			prevCur = helpers.CreateCursor(record[0].ProductId, false)
+			pagination = helpers.GeneratePager(nextCur, prevCur)
+		} else {
+			if len(record) > 0 {
+				nextCur = helpers.CreateCursor(record[len(record)-1].ProductId, true)
+				prevCur = helpers.CreateCursor(record[0].ProductId, false)
+				pagination = helpers.GeneratePager(nextCur, prevCur)
+			}
+		}
+	}
+	return pagination
 }
 
 func AddProduct(c fiber.Ctx) error {
