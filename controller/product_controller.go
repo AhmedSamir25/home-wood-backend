@@ -23,7 +23,7 @@ func GetAllProducts(c fiber.Ctx) error {
 		page = 1
 	}
 
-	perPage := c.Query("per_page", "5")
+	perPage := c.Query("per_page", "10")
 	sortOrder := c.Query("sort_order", "desc")
 	record := []model.Products{}
 
@@ -39,18 +39,13 @@ func GetAllProducts(c fiber.Ctx) error {
 
 	db.Order("product_id " + sortOrder).Offset(offset).Limit(int(limit)).Find(&record)
 
-	hasPagination := len(record) > int(limit)
-	if hasPagination {
-		record = record[:limit]
-	}
-
-	pageInfo := calculatePagination(false, hasPagination, int(limit), record, false)
-
 	if len(record) == 0 {
-		context["msg"] = "error when getting products"
+		context["msg"] = "No products found"
 		context["statusText"] = "error"
 		return c.Status(400).JSON(context)
 	}
+
+	pageInfo := calculatePagination(page == 1, len(record) == int(limit), int(limit), record, len(record) == int(limit))
 
 	response := common.ResponseDTO{
 		Success:    true,
@@ -61,28 +56,28 @@ func GetAllProducts(c fiber.Ctx) error {
 	return c.Status(200).JSON(context)
 }
 
-func calculatePagination(isFirstPage bool, hasPagination bool, limit int, record []model.Products, pointsNext bool) helpers.PaginationInfo {
+func calculatePagination(isFirstPage bool, hasPagination bool, _ int, record []model.Products, pointsNext bool) helpers.PaginationInfo {
 	pagination := helpers.PaginationInfo{}
 	var nextCur, prevCur helpers.Cursor
 
 	if isFirstPage {
 		if hasPagination {
-			nextCur = helpers.CreateCursor(record[limit-1].ProductId, true)
+			nextCur = helpers.CreateCursor(record[len(record)-1].ProductId, true)
 			pagination = helpers.GeneratePager(nextCur, nil)
 		}
 	} else {
 		if pointsNext {
 			if hasPagination {
-				nextCur = helpers.CreateCursor(record[limit-1].ProductId, true)
+				nextCur = helpers.CreateCursor(record[len(record)-1].ProductId, true)
 			}
 			prevCur = helpers.CreateCursor(record[0].ProductId, false)
 			pagination = helpers.GeneratePager(nextCur, prevCur)
 		} else {
-			nextCur = helpers.CreateCursor(record[limit-1].ProductId, true)
-			if hasPagination {
+			if len(record) > 0 {
+				nextCur = helpers.CreateCursor(record[len(record)-1].ProductId, true)
 				prevCur = helpers.CreateCursor(record[0].ProductId, false)
+				pagination = helpers.GeneratePager(nextCur, prevCur)
 			}
-			pagination = helpers.GeneratePager(nextCur, prevCur)
 		}
 	}
 	return pagination
