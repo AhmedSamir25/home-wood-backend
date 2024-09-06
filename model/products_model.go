@@ -7,4 +7,5 @@ type Products struct {
 	ProductRating      float32 `json:"product_rating"`
 	ProductRateCount   int     `json:"product_rate_count"`
 	ProductDescription string  `json:"product_description"`
+	ProductImage       string  `json:"product_image"`
 }
