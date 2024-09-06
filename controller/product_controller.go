@@ -88,23 +88,24 @@ func AddProduct(c fiber.Ctx) error {
 		"msg":        "success add product",
 		"statusText": "Ok",
 	}
+
 	record := new(model.Products)
 	if err := c.Bind().Body(record); err != nil {
 		context["statusText"] = "bad"
 		context["msg"] = "invalid request"
-		c.Status(400)
-		return c.JSON(context)
+		return c.Status(400).JSON(context)
 	}
+
 	db := database.DbConn
+
 	result := db.Create(record)
 	if result.Error != nil {
-		context["msg"] = "error when add product"
+		context["msg"] = "error when adding product"
 		context["statusText"] = "error"
-		c.Status(400)
-		c.JSON(context)
+		return c.Status(400).JSON(context)
 	}
-	c.Status(200)
-	return c.JSON(context)
+
+	return c.Status(200).JSON(context)
 }
 
 func UpdateProduct(c fiber.Ctx) error {
