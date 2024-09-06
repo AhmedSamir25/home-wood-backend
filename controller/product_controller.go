@@ -5,6 +5,7 @@ import (
 	"homewood/database"
 	"homewood/helpers"
 	"homewood/model"
+	"log"
 	"strconv"
 
 	"github.com/gofiber/fiber/v3"
@@ -170,4 +171,6 @@ func DeleteProduct(c fiber.Ctx) error {
 	return c.JSON(context)
 }
 
-func GetProductPyCategories() {}
+func GetProductPyCategories() {
+	log.Println("GetProductPyCategories")
+}
