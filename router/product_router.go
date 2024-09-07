@@ -11,4 +11,5 @@ func ProductsRouting(app *fiber.App) {
 	app.Post("homewood/product", controller.AddProduct)
 	app.Put("homewood/product/:id", controller.UpdateProduct)
 	app.Delete("homewood/product/:id", controller.DeleteProduct)
+	app.Get("homewood/products/category/:id", controller.GetProductPyCategories)
 }

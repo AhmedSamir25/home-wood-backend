@@ -5,7 +5,6 @@ import (
 	"homewood/database"
 	"homewood/helpers"
 	"homewood/model"
-	"log"
 	"strconv"
 
 	"github.com/gofiber/fiber/v3"
@@ -171,6 +170,20 @@ func DeleteProduct(c fiber.Ctx) error {
 	return c.JSON(context)
 }
 
-func GetProductPyCategories() {
-	log.Println("GetProductPyCategories")
+func GetProductPyCategories(c fiber.Ctx) error {
+	context := fiber.Map{
+		"msg":        "delete product success",
+		"statusText": "Ok",
+	}
+	id := c.Params("id")
+	db := database.DbConn
+	record := []model.Products{}
+
+	err := db.Joins("products").Where("category_id = ?", id).Find(&record).Error
+	if err != nil {
+		return err
+	}
+	context["products"] = record
+	return c.Status(200).JSON(context)
+
 }
