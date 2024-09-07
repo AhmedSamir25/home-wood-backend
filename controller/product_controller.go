@@ -170,9 +170,9 @@ func DeleteProduct(c fiber.Ctx) error {
 	return c.JSON(context)
 }
 
-func GetProductPyCategories(c fiber.Ctx) error {
+func GetProductsPyCategories(c fiber.Ctx) error {
 	context := fiber.Map{
-		"msg":        "delete product success",
+		"msg":        "get products success",
 		"statusText": "Ok",
 	}
 	id := c.Params("id")
@@ -180,6 +180,24 @@ func GetProductPyCategories(c fiber.Ctx) error {
 	record := []model.Products{}
 
 	err := db.Joins("products").Where("category_id = ?", id).Find(&record).Error
+	if err != nil {
+		return err
+	}
+	context["products"] = record
+	return c.Status(200).JSON(context)
+
+}
+
+func GetProductDetails(c fiber.Ctx) error {
+	context := fiber.Map{
+		"msg":        "get product details success",
+		"statusText": "Ok",
+	}
+	id := c.Params("id")
+	db := database.DbConn
+	record := []model.Products{}
+
+	err := db.Joins("products").Where("product_id = ?", id).Find(&record).Error
 	if err != nil {
 		return err
 	}
