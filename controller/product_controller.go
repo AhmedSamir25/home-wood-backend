@@ -176,14 +176,43 @@ func GetProductsPyCategories(c fiber.Ctx) error {
 		"statusText": "Ok",
 	}
 	id := c.Params("id")
+	pageStr := c.Params("pageId", "1")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
 	db := database.DbConn
+	perPage := c.Query("per_page", "10")
+	sortOrder := c.Query("sort_order", "desc")
 	record := []model.Products{}
 
-	err := db.Joins("products").Where("category_id = ?", id).Find(&record).Error
+	limit, err := strconv.ParseInt(perPage, 10, 64)
+	if limit < 1 || limit > 100 {
+		limit = 5
+	}
+	if err != nil {
+		return c.Status(500).JSON("Invalid per_page option")
+	}
+	offset := (page - 1) * int(limit)
+
+	err = db.Joins("products").Where("category_id = ?", id).Order("product_id " + sortOrder).Offset(offset).Limit(int(limit)).Find(&record).Error
 	if err != nil {
 		return err
 	}
-	context["products"] = record
+	if len(record) == 0 {
+		context["msg"] = "No products found"
+		context["statusText"] = "error"
+		return c.Status(400).JSON(context)
+	}
+	pageInfo := calculatePagination(page == 1, len(record) == int(limit), int(limit), record, len(record) == int(limit))
+
+	response := common.ResponseDTO{
+		Success:    true,
+		Data:       record,
+		Pagination: pageInfo,
+	}
+	context["products"] = response
 	return c.Status(200).JSON(context)
 
 }
