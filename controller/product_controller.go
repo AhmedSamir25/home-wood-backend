@@ -39,12 +39,6 @@ func GetAllProducts(c fiber.Ctx) error {
 
 	db.Order("product_id " + sortOrder).Offset(offset).Limit(int(limit)).Find(&record)
 
-	if len(record) == 0 {
-		context["msg"] = "No products found"
-		context["statusText"] = "error"
-		return c.Status(400).JSON(context)
-	}
-
 	pageInfo := calculatePagination(page == 1, len(record) == int(limit), int(limit), record, len(record) == int(limit))
 
 	response := common.ResponseDTO{
@@ -199,11 +193,6 @@ func GetProductsPyCategories(c fiber.Ctx) error {
 	err = db.Joins("products").Where("category_id = ?", id).Order("product_id " + sortOrder).Offset(offset).Limit(int(limit)).Find(&record).Error
 	if err != nil {
 		return err
-	}
-	if len(record) == 0 {
-		context["msg"] = "No products found"
-		context["statusText"] = "error"
-		return c.Status(400).JSON(context)
 	}
 	pageInfo := calculatePagination(page == 1, len(record) == int(limit), int(limit), record, len(record) == int(limit))
 
