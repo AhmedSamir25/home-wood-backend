@@ -7,10 +7,10 @@ import (
 )
 
 func ProductsRouting(app *fiber.App) {
-	app.Get("homewood/products/:pageid", controller.GetAllProducts)
+	app.Get("homewood/products=:pageid", controller.GetAllProducts)
 	app.Post("homewood/product", controller.AddProduct)
-	app.Put("homewood/product/:id", controller.UpdateProduct)
-	app.Delete("homewood/product/:id", controller.DeleteProduct)
-	app.Get("homewood/products/category/:id", controller.GetProductsPyCategories)
-	app.Get("homewood/product/details/:id", controller.GetProductDetails)
+	app.Put("homewood/product=:id", controller.UpdateProduct)
+	app.Delete("homewood/product=:id", controller.DeleteProduct)
+	app.Get("homewood/products/category=:id/page_id=:pageId", controller.GetProductsPyCategories)
+	app.Get("homewood/product/details=:id", controller.GetProductDetails)
 }
