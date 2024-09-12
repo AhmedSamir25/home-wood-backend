@@ -14,5 +14,6 @@ func main() {
 	router.BannerRouter(app)
 	router.CategoriesRouter(app)
 	router.ProductsRouting(app)
+	router.FavoriteRouting(app)
 	app.Listen("0.0.0.0:3002")
 }
