@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	database.ConnDB()
+	database.ConDB()
 	app := fiber.New()
 	router.AuthRouter(app)
 	router.BannerRouter(app)
