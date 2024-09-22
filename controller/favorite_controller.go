@@ -49,9 +49,21 @@ func AddProductToFavorite(c fiber.Ctx) error {
 	db := database.DbConn
 	result := db.Where("product_id = ? AND user_id = ?", record.ProductId, record.UserId).First(&existingFavorite)
 	if result.Error == nil {
-		context["statusText"] = "bad"
-		context["msg"] = "product already exists"
-		c.Status(400)
+		resultDelete := database.DbConn.Where("product_id = ? AND user_id = ?", record.ProductId, record.UserId).Delete(&model.Favorites{})
+		if resultDelete.Error != nil {
+			context["msg"] = "error deleting record"
+			context["statusText"] = "error"
+			return c.Status(fiber.StatusInternalServerError).JSON(context)
+		}
+
+		if resultDelete.RowsAffected == 0 {
+			context["msg"] = "no records were deleted"
+			context["statusText"] = "warning"
+			return c.Status(fiber.StatusNotFound).JSON(context)
+		}
+		context["msg"] = "Product has been successfully removed"
+		context["statusText"] = "Ok"
+		c.Status(200)
 		return c.JSON(context)
 	}
 	result = db.Create(record)
