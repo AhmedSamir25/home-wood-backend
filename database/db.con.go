@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	//"github.com/joho/godotenv"
+	// "github.com/joho/godotenv"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -13,7 +13,7 @@ import (
 
 var DbConn *gorm.DB
 
-func ConnDB() {
+func ConDB() {
 	// err := godotenv.Load()
 	// if err != nil {
 	// 	panic("Error loading .env file")
