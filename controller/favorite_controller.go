@@ -45,33 +45,26 @@ func AddProductToFavorite(c fiber.Ctx) error {
 		c.Status(400)
 		return c.JSON(context)
 	}
-	var existingFavorite model.Favorites
 	db := database.DbConn
-	result := db.Where("product_id = ? AND user_id = ?", record.ProductId, record.UserId).First(&existingFavorite)
+
+	result := db.Where("product_id = ? AND user_id = ?", record.ProductId, record.UserId).First(&model.Favorites{})
+
 	if result.Error == nil {
-		resultDelete := database.DbConn.Where("product_id = ? AND user_id = ?", record.ProductId, record.UserId).Delete(&model.Favorites{})
-		if resultDelete.Error != nil {
-			context["msg"] = "error deleting record"
+		if err := db.Where("product_id = ? AND user_id = ?", record.ProductId, record.UserId).Delete(&model.Favorites{}).Error; err != nil {
+			context["msg"] = "Error deleting the product from favorites"
 			context["statusText"] = "error"
 			return c.Status(fiber.StatusInternalServerError).JSON(context)
 		}
 
-		if resultDelete.RowsAffected == 0 {
-			context["msg"] = "no records were deleted"
-			context["statusText"] = "warning"
-			return c.Status(fiber.StatusNotFound).JSON(context)
-		}
-		context["msg"] = "Product has been successfully removed"
+		context["msg"] = "Product has been successfully removed from favorites"
 		context["statusText"] = "Ok"
-		c.Status(200)
-		return c.JSON(context)
+		return c.Status(fiber.StatusOK).JSON(context)
 	}
-	result = db.Create(record)
-	if result.Error != nil {
-		context["msg"] = "An error occurred while adding the product"
+
+	if err := db.Create(record).Error; err != nil {
+		context["msg"] = "An error occurred while adding the product to favorites"
 		context["statusText"] = "bad"
-		c.Status(400)
-		return c.JSON(context)
+		return c.Status(fiber.StatusBadRequest).JSON(context)
 	}
 	return c.JSON(context)
 }
