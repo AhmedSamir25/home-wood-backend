@@ -8,4 +8,5 @@ import (
 
 func CartRouter(app *fiber.App) {
 	app.Post("homewood/cart", controller.AddProductToCart)
+	app.Get("homewood/cart/user=:id", controller.GetProductFromCart)
 }

@@ -40,3 +40,26 @@ func AddProductToCart(c fiber.Ctx) error {
 	}
 	return c.JSON(context)
 }
+
+func GetProductFromCart(c fiber.Ctx) error {
+	context := fiber.Map{
+		"msg":        "All products have been successfully fetched from the cart",
+		"statusText": "Ok",
+	}
+	userId := c.Params("id")
+	db := database.DbConn
+	var record []model.Products
+	err := db.Table("products").
+		Select("*").
+		Joins("JOIN carts AS f ON f.product_id = products.product_id").
+		Where("f.user_id = ?", userId).
+		Find(&record).Error
+	if err != nil {
+		context["msg"] = "error when get products"
+		context["statusText"] = "error"
+		c.Status(400)
+		return c.JSON(context)
+	}
+	context["products"] = record
+	return c.JSON(context)
+}
