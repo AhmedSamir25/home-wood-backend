@@ -16,5 +16,6 @@ func main() {
 	router.ProductsRouting(app)
 	router.FavoriteRouting(app)
 	router.CartRouter(app)
+	router.OrderRouter(app)
 	app.Listen("0.0.0.0:3002")
 }
