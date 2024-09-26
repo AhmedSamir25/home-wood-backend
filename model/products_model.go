@@ -9,4 +9,5 @@ type Products struct {
 	ProductDescription string  `json:"product_description"`
 	ProductImage       string  `json:"product_image"`
 	CategoryId         int     `json:"category_id"`
+	CategoryName       string  `json:"category_name"`
 }
