@@ -37,7 +37,13 @@ func GetAllProducts(c fiber.Ctx) error {
 
 	offset := (page - 1) * int(limit)
 
-	db.Order("product_id " + sortOrder).Offset(offset).Limit(int(limit)).Find(&record)
+	db.Table("products").
+		Select("products.*, cate.category_name").
+		Joins("JOIN categories As cate ON cate.category_id = products.category_id").
+		Order("product_id " + sortOrder).
+		Offset(offset).
+		Limit(int(limit)).
+		Scan(&record)
 
 	pageInfo := calculatePagination(page == 1, len(record) == int(limit), int(limit), record, len(record) == int(limit))
 
@@ -190,7 +196,14 @@ func GetProductsPyCategories(c fiber.Ctx) error {
 	}
 	offset := (page - 1) * int(limit)
 
-	err = db.Joins("products").Where("category_id = ?", id).Order("product_id " + sortOrder).Offset(offset).Limit(int(limit)).Find(&record).Error
+	err = db.Table("products").
+		Select("products.*, cate.category_name").
+		Joins("JOIN categories AS cate ON cate.category_id = products.category_id").
+		Where("products.category_id = ?", id).
+		Order("products.product_id " + sortOrder).
+		Offset(offset).
+		Limit(int(limit)).
+		Find(&record).Error
 	if err != nil {
 		return err
 	}
