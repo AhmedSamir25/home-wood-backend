@@ -225,14 +225,34 @@ func GetProductDetails(c fiber.Ctx) error {
 		"statusText": "Ok",
 	}
 	id := c.Params("id")
+	userId := c.Params("userId")
 	db := database.DbConn
 	record := []model.Products{}
 
-	err :=
-		db.Table("products").
-			Select("products.*, cate.category_name").
-			Joins("JOIN categories As cate ON cate.category_id = products.category_id").
-			Where("product_id = ?", id).Find(&record).Error
+	err := db.Table("products").
+		Select(`
+        products.*, 
+        cate.category_name, 
+        CASE 
+            WHEN EXISTS (
+                SELECT 1 FROM favorites 
+                WHERE favorites.product_id = products.product_id 
+                AND favorites.user_id = ?
+            ) THEN 1 
+            ELSE 0 
+        END AS is_favorite,
+        CASE 
+            WHEN EXISTS (
+                SELECT 1 FROM carts 
+                WHERE carts.product_id = products.product_id 
+                AND carts.user_id = ?
+            ) THEN 1 
+            ELSE 0 
+        END AS is_in_cart
+    `, userId, userId).
+		Joins("JOIN categories AS cate ON cate.category_id = products.category_id").
+		Where("products.product_id = ?", id).
+		Find(&record).Error
 	if err != nil {
 		return err
 	}
