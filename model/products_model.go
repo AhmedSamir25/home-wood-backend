@@ -10,4 +10,6 @@ type Products struct {
 	ProductImage       string  `json:"product_image"`
 	CategoryId         int     `json:"category_id"`
 	CategoryName       string  `json:"category_name"`
+	IsFavorite         bool    `json:"is_favorite"`
+	IsInCart           bool    `json:"is_in_cart"`
 }
