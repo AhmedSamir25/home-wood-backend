@@ -228,7 +228,11 @@ func GetProductDetails(c fiber.Ctx) error {
 	db := database.DbConn
 	record := []model.Products{}
 
-	err := db.Joins("products").Where("product_id = ?", id).Find(&record).Error
+	err :=
+		db.Table("products").
+			Select("products.*, cate.category_name").
+			Joins("JOIN categories As cate ON cate.category_id = products.category_id").
+			Where("product_id = ?", id).Find(&record).Error
 	if err != nil {
 		return err
 	}
